@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["completion", '{{ cli_root }}cli', 'resource']
+exclude = ["tests"]
+
+[project.optional-dependencies]
+completion = ['argcomplete']
+test = ['pytest']
+
+[tool.setuptools.data-files]
+["share/{{ cli_root }}cli/environment"] = ["completion/{{ cli_root }}-argcomplete.bash", "completion/{{ cli_root }}-argcomplete.zsh"]
+
+[tool.setuptools]
+zip-safe = false
+
+[project]
+name = "{{ cli_root }}cli"
+version = "0.0.1"
+authors = [
+  { name="Your Name", email="your@mail.org" }
+]
+maintainers = [
+  { name="Your Name", email="your@mail.org" }
+]
+license = { text = "Apache License, Version 2.0" }
+description = "My awesome command line tool."
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+]
+dependencies = [
+  "packaging",
+  # List your dependencies here, e.g., 'pytest'
+]
+
+[project.urls]
+"Homepage" = "https://github.com/{{ cli_root }}/{{ cli_root }}cli/tree/master/{{ cli_root }}cli"
+"Repository" = "https://github.com/{{ cli_root }}/{{ cli_root }}cli/releases"
+
+[project.entry-points."{{ cli_root }}cli.command"]
+extension_points = "{{ cli_root }}cli.command.extension_points:ExtensionPointsCommand"
+extensions = "{{ cli_root }}cli.command.extensions:ExtensionsCommand"
+
+[project.entry-points."{{ cli_root }}cli.extension_point"]
+command = "{{ cli_root }}cli.command:CommandExtension"
+
+[project.scripts]
+{{ cli_root }} = "{{ cli_root }}cli.cli:main"

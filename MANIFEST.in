@@ -1,0 +1,1 @@
+recursive-include x2cli/templates *.j2

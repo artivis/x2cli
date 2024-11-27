@@ -1,0 +1,43 @@
+[build-system]
+requires = ['setuptools>=42']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+namespaces = true
+exclude = ['tests', '*x2cli_copy*']
+
+#[tool.setuptools.package-data]
+#"ros2cli.templates.x2cli" = ["*templates/x2cli*"]
+
+[project]
+name = "x2cli"
+version = "0.0.1"
+authors = [
+  { name="Jeremie Deray", email="jeremie.deray@canonical.com" }
+]
+maintainers = [
+  { name="Jeremie Deray", email="jeremie.deray@canonical.com" }
+]
+license = { text = "Apache License, Version 2.0" }
+description = "Python script to generate a CLI tool skeleton."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+]
+dependencies = [
+  "jinja2",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/artivis/x2cli"
+"Repository" = "https://github.com/artivis/x2cli/releases"
+
+[project.scripts]
+x2cli = "x2cli.x2cli:main"

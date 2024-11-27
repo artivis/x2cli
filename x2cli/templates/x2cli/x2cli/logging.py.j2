@@ -1,0 +1,15 @@
+import logging
+
+_logger = logging.getLogger('{{ cli_root }}')
+sh = logging.StreamHandler()
+sh.setFormatter(
+    logging.Formatter(
+        '%(asctime)s - %(name)s - [%(levelname)s]: %(message)s',
+        datefmt='%m/%d/%Y %I:%M:%S %p'
+    )
+)
+_logger.addHandler(sh)
+_logger.setLevel("ERROR")
+
+def get_logger():
+    return logging.getLogger('{{ cli_root }}')

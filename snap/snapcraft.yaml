@@ -1,0 +1,22 @@
+name: x2cli
+summary: A script to generate Python CLI tool skeleton.
+description: |
+  x2cli is a script to generate a Python CLI tool skeleton.
+
+  For instance, calling `x2cli foo` will generate the `foocli` folder
+  in the current directory ready to be populated.
+  The CLI skeleton is based on the `ros2cli` code base.
+
+version: '0.0.1'
+base: core24
+confinement: strict
+
+apps:
+  x2cli:
+    command: bin/x2cli
+    plugs: [home]
+
+parts:
+  x2cli:
+    plugin: python
+    source: .
