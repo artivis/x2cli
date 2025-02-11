@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The `helpers` module."""
+
 import functools
 import inspect
-import os
 import time
 
 
 def wait_for(predicate, timeout, period=0.1):
-    """
-    Wait for a predicate to evaluate to `True`.
+    """Wait for a predicate to evaluate to `True`.
 
     :param timeout: duration, in seconds, to wait
       for the predicate to evaluate to `True`.
@@ -41,8 +41,7 @@ def wait_for(predicate, timeout, period=0.1):
 
 
 def bind(func, *args, **kwargs):
-    """
-    Bind a function with a set of arguments.
+    """Bind a function with a set of arguments.
 
     A functools.partial equivalent that is actually a function.
     """
@@ -51,27 +50,25 @@ def bind(func, *args, **kwargs):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return partial(*args, **kwargs)
+
     wrapper.__signature__ = inspect.signature(func)
     return wrapper
 
 
 def pretty_print_call(func, *args, **kwargs):
-    """
-    Print a function invocation.
+    """Print a function invocation.
 
     See `before_invocation` for usage as a hook.
     """
     name = func.__name__
     arguments = ', '.join(
-        [f'{v!r}' for v in args] +
-        [f'{k}={v!r}' for k, v in kwargs.items()]
+        [f'{v!r}' for v in args] + [f'{k}={v!r}' for k, v in kwargs.items()]
     )
     print(f'{name}({arguments})')
 
 
 def before_invocation(func, hook):
-    """
-    Invoke a `hook` before every `func` invocation.
+    """Invoke a `hook` before every `func` invocation.
 
     `hook` may take no arguments or take the `func`
     and arbitrary positional and keyword arguments.
@@ -81,14 +78,18 @@ def before_invocation(func, hook):
     if inspect.ismethod(hook):
         nargs = nargs - 1
     if nargs > 0:
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             hook(func, *args, **kwargs)
             return func(*args, **kwargs)
+
     else:
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             hook()
             return func(*args, **kwargs)
+
     wrapper.__signature__ = inspect.signature(func)
     return wrapper

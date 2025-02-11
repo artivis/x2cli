@@ -1,0 +1,64 @@
+# {{ project_name }}
+
+A Python CLI tool
+
+## Install
+
+```bash
+python3 -m pip install .
+```
+
+## Use
+
+Print the general helper,
+
+```bash
+{{ cli_command }} --help
+```
+
+Each command has its own helper,
+
+```bash
+{{ cli_command }} <command> --help
+```
+
+as well as each verb,
+
+```bash
+{{ cli_command }} <command> <verb> --help
+```
+
+## Completion
+
+The cli supports auto completion through [`argcomplete`](https://pypi.org/project/argcomplete/).
+To enable it, add the following to your `.bashrc`:
+
+For bash
+
+```bash
+if type register-python-argcomplete3 > /dev/null 2>&1; then
+  eval "$(register-python-argcomplete3 {{ cli_command }})"
+elif type register-python-argcomplete > /dev/null 2>&1; then
+  eval "$(register-python-argcomplete {{ cli_command }})"
+fi
+```
+
+For zsh
+
+```bash
+if (( ! ${+_comps} )); then
+  autoload -U +X compinit && compinit
+fi
+autoload -U +X bashcompinit && bashcompinit
+
+# Get this scripts directory
+__{{ cli_command }}_completion_dir=${0:a:h}
+# Just source the bash version, it works in zsh too
+if type register-python-argcomplete3 > /dev/null 2>&1; then
+  eval "$(register-python-argcomplete3 {{ cli_command }})"
+elif type register-python-argcomplete > /dev/null 2>&1; then
+  eval "$(register-python-argcomplete {{ cli_command }})"
+fi
+# Cleanup
+unset __foocli_completion_dir
+```

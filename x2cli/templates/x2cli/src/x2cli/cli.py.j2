@@ -13,20 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The `cli` module."""
+
 import argparse
 import builtins
 import functools
+import logging
 import signal
 import sys
 
-from {{ cli_root }}cli.command import add_subparsers_on_demand
-from {{ cli_root }}cli.logging import get_logger
+from {{ project_name }}.command import add_subparsers_on_demand
+
+logger = logging.getLogger(__name__)
+
+_sh = logging.StreamHandler()
+_sh.setFormatter(
+    logging.Formatter(
+        '%(asctime)s - %(name)s - [%(levelname)s]: %(message)s',
+        datefmt='%m/%d/%Y %I:%M:%S %p',
+    )
+)
+logger.addHandler(_sh)
 
 
-def main(*, script_name='{{ cli_root }}', argv=None, description=None, extension=None):
+def main(*, script_name='{{ cli_command }}', argv=None, description=None, extension=None):  # noqa C901
     if description is None:
-        description = f'{script_name} is an extensible command-line tool ' \
-            'for {{cli_brief}}.'
+        description = (
+            '{{ cli_command }} is an extensible command-line tool for doing incredible things.'
+        )
 
     # top level parser
     parser = argparse.ArgumentParser(
@@ -39,20 +53,26 @@ def main(*, script_name='{{ cli_root }}', argv=None, description=None, extension
         action='store_true',
         default=False,
         help=(
-            'Do not force line buffering in stdout and instead use the python default buffering, '
-            'which might be affected by PYTHONUNBUFFERED/-u and depends on whatever stdout is '
-            'interactive or not'
-        )
+            'Do not force line buffering in stdout and '
+            'instead use the python default buffering,'
+            'which might be affected by PYTHONUNBUFFERED/-u and '
+            'depends on whatever stdout is interactive or not'
+        ),
     )
     parser.add_argument(
         "-v",
         "--verbose",
         action="count",
         default=False,
-        help="Increase verbosity."
+        help="Increase verbosity.",
     )
 
     root_args, extension_args = parser.parse_known_args(args=argv)
+
+    verbosity_map = {0: "WARNING", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
+    verbosity = verbosity_map.get(root_args.verbose, "DEBUG")
+    logger.setLevel(verbosity)
+    logger.debug(f"Enabling verbosity to '{verbosity}'")
 
     # Re-enable help after having disable it so that it is not triggered
     # above in parse_known_args. This way it can possibly be passed
@@ -73,11 +93,14 @@ def main(*, script_name='{{ cli_root }}', argv=None, description=None, extension
         # get command entry points as needed
         selected_extension_key = '_command'
         add_subparsers_on_demand(
-            parser, script_name, selected_extension_key, '{{ cli_root }}cli.command',
+            parser,
+            script_name,
+            selected_extension_key,
+            '{{ project_name }}.command',
             # hide the special commands in the help
             hide_extensions=['extension_points', 'extensions'],
             required=False,
-            argv=argv
+            argv=argv,
         )
 
     # register argcomplete hook if available
@@ -87,21 +110,6 @@ def main(*, script_name='{{ cli_root }}', argv=None, description=None, extension
         pass
     else:
         autocomplete(parser, exclude=['-h', '--help'])
-
-    if root_args.verbose:
-
-        def switch(v):
-            if v == 1:
-                return "WARNING"
-            elif v == 2:
-                return "INFO"
-            elif v == 3:
-                return "DEBUG"
-            else:
-                return "DEBUG"
-
-        get_logger().setLevel(switch(root_args.verbose))
-        get_logger().debug(f"Enabling verbosity to '{switch(root_args.verbose)}'")
 
     # parse the command line arguments
     args = parser.parse_args(args=extension_args)
@@ -113,7 +121,8 @@ def main(*, script_name='{{ cli_root }}', argv=None, description=None, extension
         try:
             sys.stdout.reconfigure(line_buffering=True)
         except AttributeError:
-            # if stdout is not a TextIoWrapper instance, or we're using python older than 3.7,
+            # if stdout is not a TextIoWrapper instance,
+            # or we're using python older than 3.7,
             # force line buffering by patching print
             builtins.print = functools.partial(print, flush=True)
 

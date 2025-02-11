@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The `entry_point` module."""
+
 import logging
 from collections import defaultdict
 
@@ -24,18 +26,17 @@ except ModuleNotFoundError:
 """
 The group name for entry points identifying extension points.
 
-While all entry points in this package start with ``{{ cli_root }}cli.`` other
+While all entry points in this package start with ``{{ project_name }}.`` other
 distributions might define entry points with a different prefix.
 Those need to be declared using this group name.
 """
-EXTENSION_POINT_GROUP_NAME = '{{ cli_root }}cli.extension_point'
+EXTENSION_POINT_GROUP_NAME = '{{ project_name }}.extension_point'
 
 logger = logging.getLogger(__name__)
 
 
 def get_all_entry_points():
-    """
-    Get all entry points related to ``{{ cli_root }}cli`` and any of its extensions.
+    """Get all entry points related to ``{{ project_name }}`` and any of its extensions.
 
     :returns: mapping of entry point names to ``EntryPoint`` instances
     :rtype: dict
@@ -55,8 +56,7 @@ def get_all_entry_points():
 
 
 def get_entry_points(group_name):
-    """
-    Get the entry points for a specific group.
+    """Get the entry points for a specific group.
 
     :param str group_name: the name of the ``entry_point`` group
     :returns: mapping of group name to dictionaries which map entry point names
@@ -75,8 +75,7 @@ def get_entry_points(group_name):
 
 
 def load_entry_points(group_name, *, exclude_names=None):
-    """
-    Load the entry points for a specific group.
+    """Load the entry points for a specific group.
 
     :param str group_name: the name of the ``entry_point`` group
     :param iterable exclude_names: the names of the entry points to exclude
@@ -90,15 +89,19 @@ def load_entry_points(group_name, *, exclude_names=None):
         try:
             extension_type = entry_point.load()
         except Exception as e:  # noqa: F841
-            logger.warning(
-                f"Failed to load entry point '{entry_point.name}': {e}"
-            )
+            logger.warning(f"Failed to load entry point '{entry_point.name}': {e}")
             continue
         extension_types[entry_point.name] = extension_type
     return extension_types
 
 
 def get_first_line_doc(any_type):
+    """Return the first non-empty line of the docstring for a given type.
+
+    :param any_type: the type whose docstring should be processed
+    :returns: the first non-empty line of the docstring without a trailing period
+    :rtype: str
+    """
     if not any_type.__doc__:
         return ''
     lines = any_type.__doc__.splitlines()

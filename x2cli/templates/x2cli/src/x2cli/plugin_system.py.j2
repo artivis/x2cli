@@ -1,0 +1,169 @@
+# Copyright 2016-2017 Dirk Thomas
+# Copyright 2017 Open Source Robotics Foundation, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""The `plugin_system` module."""
+
+import logging
+from collections import OrderedDict
+
+from packaging.version import Version
+
+from {{ project_name }}.entry_points import load_entry_points
+
+PLUGIN_SYSTEM_VERSION = '0.1'
+
+logger = logging.getLogger(__name__)
+
+
+class PluginError(Exception):
+    """Base class for all exceptions within the plugin system."""
+
+    pass
+
+
+_extension_instances = {}
+
+
+def instantiate_extensions(group_name, *, exclude_names=None, unique_instance=False):
+    """Instantiates extensions from a given entry point group.
+
+    Args:
+        group_name (str): The name of the entry point group to load extensions from.
+        exclude_names (list[str], optional): A list of extension names to exclude.
+            Defaults to None.
+        unique_instance (bool, optional): Whether or not to create a unique instance
+            of each extension.
+            If True, an existing instance will be returned if one already exists.
+            Defaults to False.
+
+    Returns:
+        dict: A dictionary of instantiated extensions,
+            with the extension name as the key and the instantiated object as the value.
+    """
+    extension_types = load_entry_points(group_name, exclude_names=exclude_names)
+    extension_instances = {}
+    for extension_name, extension_class in extension_types.items():
+        extension_instance = _instantiate_extension(
+            group_name, extension_name, extension_class, unique_instance=unique_instance
+        )
+        if extension_instance is None:
+            continue
+        extension_instances[extension_name] = extension_instance
+    return extension_instances
+
+
+def _instantiate_extension(
+    group_name, extension_name, extension_class, *, unique_instance=False
+):
+    global _extension_instances
+    if not unique_instance and extension_class in _extension_instances:
+        return _extension_instances[extension_class]
+
+    try:
+        extension_instance = extension_class()
+    except PluginError as e:  # noqa: F841
+        logger.warning(
+            f"Failed to instantiate '{group_name}' extension '{extension_name}': {e}"
+        )
+        return None
+    except Exception as e:  # noqa: F841
+        logger.error(
+            f"Failed to instantiate '{group_name}' extension '{extension_name}': {e}"
+        )
+        return None
+    if not unique_instance:
+        _extension_instances[extension_class] = extension_instance
+    return extension_instance
+
+
+def order_extensions(extensions, key_function, *, reverse=False):
+    """Sorts a dictionary of extensions and returns an OrderedDict.
+
+    Args:
+        extensions (dict): The dictionary of extensions to sort.
+        key_function (callable): A function that takes an extension instance and
+            returns a value to use as the sorting key.
+        reverse (bool): If True, the sorted order will be reversed. Defaults to False.
+
+    Returns:
+        OrderedDict: An OrderedDict containing the sorted extensions.
+    """
+    return OrderedDict(sorted(extensions.items(), key=key_function, reverse=reverse))
+
+
+def order_extensions_by_name(extensions):
+    """Orders extensions by their name.
+
+    Args:
+        extensions (dict): A dictionary of extension instances to be ordered.
+
+    Returns:
+        OrderedDict: An ordered dictionary of the input extensions, sorted by name.
+    """
+    return order_extensions(extensions, lambda pair: pair[0])
+
+
+def satisfies_version(version, caret_range):
+    """Checks if a given version satisfies a caret range requirement.
+
+    Args:
+        version (str): The version to check.
+        caret_range (str): The caret range requirement to satisfy.
+
+    Returns:
+        bool: True if the version satisfies the caret range requirement,
+            False otherwise.
+
+    Raises:
+        PluginError: If the extension point is too old or newer than what
+            the extension supports.
+    """
+    assert caret_range.startswith('^'), 'Only supports caret ranges'
+    extension_point_version = Version(version)
+    extension_version = Version(caret_range[1:])
+    next_extension_version = get_upper_bound_caret_version(extension_version)
+
+    if extension_point_version < extension_version:
+        raise PluginError(
+            'Extension point is too old (%s), the extension requires '
+            "'%s'" % (extension_point_version, extension_version)
+        )
+
+    if extension_point_version >= next_extension_version:
+        raise PluginError(
+            'Extension point is newer (%s), than what the extension '
+            "supports '%s'" % (extension_point_version, extension_version)
+        )
+
+
+def get_upper_bound_caret_version(version):
+    """Get the upper bound version for a caret range.
+
+    Args:
+        version: A Version object representing the base version of the range.
+
+    Returns:
+        A Version object representing the upper bound of the caret range.
+    """
+    parts = version.base_version.split('.')
+    if len(parts) < 2:
+        parts += [0] * (2 - len(parts))
+    major, minor = [int(p) for p in parts[:2]]
+    if major > 0:
+        major += 1
+        minor = 0
+    else:
+        minor += 1
+    return Version('%d.%d.0' % (major, minor))

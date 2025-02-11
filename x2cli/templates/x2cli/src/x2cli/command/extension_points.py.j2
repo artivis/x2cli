@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from {{ cli_root }}cli.command import CommandExtension
-from {{ cli_root }}cli.entry_points import (
+"""The extension_points module."""
+
+from {{ project_name }}.command import CommandExtension
+from {{ project_name }}.entry_points import (
     EXTENSION_POINT_GROUP_NAME,
     get_entry_points,
     get_first_line_doc,
@@ -25,26 +27,40 @@ class ExtensionPointsCommand(CommandExtension):
     """List extension points."""
 
     def add_arguments(self, parser, cli_name):
+        """Add arguments to the command-line interface.
+
+        Args:
+            parser (argparse.ArgumentParser): The argument parser for the CLI.
+            cli_name (str): The name of the CLI tool being used.
+        """
         parser.add_argument(
-            '--all', '-a',
+            '-a',
+            '--all',
             action='store_true',
             default=False,
             help='Also show extension points which failed to be imported. '
-                 '(prefixed with `- `)')
-        # parser.add_argument(
-        #     '--verbose', '-v',
-        #     action='store_true',
-        #     default=False,
-        #     help='Show more information for each extension point')
+            '(prefixed with `- `)',
+        )
 
     def main(self, *, parser, args):
+        """Main function for the ExtensionPointsCommand.
+
+        Args:
+            parser (argparse.ArgumentParser): The argument parser for the CLI.
+            args (Namespace): Parsed command-line arguments.
+        """
         extension_points = get_entry_points(EXTENSION_POINT_GROUP_NAME)
         for name in sorted(extension_points.keys()):
-            self.print_extension_point(
-                args, name, extension_points[name]
-            )
+            self.print_extension_point(args, name, extension_points[name])
 
     def print_extension_point(self, args, name, entry_point):
+        """Prints an extension point's information.
+
+        Args:
+            args (Namespace): Parsed command-line arguments.
+            name (str): The name of the extension point.
+            entry_point (EntryPoint): An object representing the entry point.
+        """
         exception = None
         try:
             extension_point = entry_point.load()
@@ -63,9 +79,7 @@ class ExtensionPointsCommand(CommandExtension):
             if entry_point.attrs:
                 print(prefix, ' ', 'attributes:', '.'.join(entry_point.attrs))
             if hasattr(extension_point, 'EXTENSION_POINT_VERSION'):
-                print(
-                    prefix, ' ', 'version:',
-                    extension_point.EXTENSION_POINT_VERSION)
+                print(prefix, ' ', 'version:', extension_point.EXTENSION_POINT_VERSION)
 
         if exception:
             print(prefix, ' ', 'reason:', str(exception))

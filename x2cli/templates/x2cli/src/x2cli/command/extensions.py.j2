@@ -13,27 +13,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from {{ cli_root }}cli.command import CommandExtension
-from {{ cli_root }}cli.entry_points import get_all_entry_points, get_first_line_doc
+"""The `extension` module."""
+
+from {{ project_name }}.command import CommandExtension
+from {{ project_name }}.entry_points import get_all_entry_points, get_first_line_doc
 
 
 class ExtensionsCommand(CommandExtension):
     """List extensions."""
 
     def add_arguments(self, parser, cli_name):
+        """Add arguments to the parser.
+
+        :param argparse.ArgumentParser parser: The parser.
+        :param str cli_name: The name of the CLI.
+        """
         parser.add_argument(
-            '--all', '-a',
+            '-a',
+            '--all',
             action='store_true',
             default=False,
             help='Also show extensions which failed to load or are '
-                 'incompatible. (prefixed with `- `)')
-        # parser.add_argument(
-        #     '--verbose', '-v',
-        #     action='store_true',
-        #     default=False,
-        #     help='Show more information for each extension')
+            'incompatible. (prefixed with `- `)',
+        )
 
     def main(self, *, parser, args):
+        """Main function for the ExtensionsCommand.
+
+        This function retrieves all entry points and
+        prints their group names and entry point names.
+        If the --all argument is provided,
+        it also prints extensions which failed to load or are incompatible.
+
+        :param argparse.ArgumentParser parser: The parser.
+        :param argparse.Namespace args: The parsed arguments.
+        """
         all_entry_points = get_all_entry_points()
         for group_name in sorted(all_entry_points.keys()):
             print(group_name)
@@ -43,6 +57,18 @@ class ExtensionsCommand(CommandExtension):
                 self.print_entry_point(args, dist, entry_point)
 
     def print_entry_point(self, args, dist, entry_point):
+        """Print the entry point information.
+
+        This function prints the name and first line docstring of the
+        entry point. If the entry point failed to load or instantiate,
+        it will be prefixed with a `-` and the reason for failure will be printed.
+        Additionally, if verbose mode is enabled, more detailed information
+        about the entry point will be printed.
+
+        :param argparse.Namespace args: The parsed arguments.
+        :param pkg_resources.Distribution dist: The distribution of the entry point.
+        :param pkg_resources.EntryPoint entry_point: The entry point to print.
+        """
         exception = None
         try:
             plugin = entry_point.load()

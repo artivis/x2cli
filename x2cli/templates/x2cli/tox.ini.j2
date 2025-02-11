@@ -1,0 +1,65 @@
+[tox]
+skipsdist = True
+skip_missing_interpreters = True
+envlist = lint#, static-{charm,lib}, unit
+
+[vars]
+src_path = {toxinidir}/src/{{ project_name }} {% for key in commands %}{toxinidir}/src/{{ cli_command }}{{ key }} {% endfor %}
+tst_path = {toxinidir}/tests
+all_path = {[vars]src_path} {[vars]tst_path}
+
+[testenv]
+basepython = python3
+setenv =
+  PYTHONPATH = {toxinidir}:{[vars]src_path}
+  PYTHONBREAKPOINT=ipdb.set_trace
+  PY_COLORS=1
+passenv =
+  PYTHONPATH
+  HOME
+  PATH
+  HTTP_PROXY
+  HTTPS_PROXY
+  NO_PROXY
+
+[testenv:fmt]
+description = Apply coding style standards to code
+deps =
+    black
+    ruff
+commands =
+    ruff check --fix {[vars]all_path}
+    black {[vars]all_path}
+
+[testenv:lint]
+description = Check code against coding style standards
+deps =
+    black
+    ruff
+    codespell
+commands =
+    codespell . --skip .git --skip .tox --skip build --skip lib --skip venv --skip .mypy_cache
+    ruff check {[vars]all_path}
+    ruff format --check --diff {[vars]all_path}
+    black --check --diff {[vars]all_path}
+
+[testenv:reqs]
+description = Check for missing or unused requirements
+deps =
+    pip-check-reqs
+    # pip-check-reqs does not yet work with recent pip
+    pip<=21.1.3
+commands =
+    pip-missing-reqs {toxinidir}/src
+    pip-extra-reqs {toxinidir}/src
+
+; [testenv:static]
+; description = Run static analysis checks
+; deps =
+;     pyright==1.1.327
+;     charm: -r{toxinidir}/requirements.txt
+;     unit: {[testenv:unit]deps}
+;     integration: {[testenv:integration]deps}
+; commands =
+;     pyright {[vars]src_path} {posargs}
+; allowlist_externals = /usr/bin/env
