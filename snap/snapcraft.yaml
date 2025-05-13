@@ -10,6 +10,7 @@ description: |
 version: '0.0.1'
 base: core24
 confinement: strict
+license: Apache-2.0
 
 apps:
   x2cli:
