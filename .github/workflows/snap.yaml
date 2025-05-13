@@ -1,0 +1,29 @@
+name: snap
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - .gitignore
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - .gitignore
+  workflow_dispatch:
+
+jobs:
+  snap:
+    uses: canonical/robotics-actions-workflows/.github/workflows/snap.yaml@main
+    secrets:
+      snapstore-login: ${{ secrets.STORE_LOGIN }}
+    with:
+      snap-test-script: |
+        #!/bin/bash
+
+        x2cli --help
+
+        x2cli map
+        ls -la map
