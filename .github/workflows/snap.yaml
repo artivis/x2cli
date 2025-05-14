@@ -18,8 +18,9 @@ jobs:
   snap:
     uses: canonical/robotics-actions-workflows/.github/workflows/snap.yaml@main
     secrets:
-      snapstore-login: ${{ secrets.STORE_LOGIN }}
+      snapstore-login: ${{ secrets.SNAPSTORE_LOGIN }}
     with:
+      snap-risk: candidate
       snap-test-script: |
         #!/bin/bash
 
