@@ -26,4 +26,4 @@ jobs:
         x2cli --help
 
         x2cli map
-        ls -la map
+        ls -la mapcli
